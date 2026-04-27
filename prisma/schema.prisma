@@ -1,13 +1,11 @@
 // prisma/schema.prisma
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  // nao podemos passar a url aqui na versao mais nova do prisma.
 }
 
 enum UserRole {
@@ -30,7 +28,8 @@ model User {
 
   // Relações do Web App Financeiro
   creditCards CreditCard[]
-  fixedCosts  FixedCost[] // Resolvendo erro P1012: relação inversa obrigatória
+  fixedCosts  FixedCost[]
+  plannings   Planning[]   // ADICIONADO: Campo oposto para resolver o erro P1012
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,6 +103,19 @@ model FixedCost {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Planning {
+  id          String   @id @default(cuid())
+  description String
+  category    String   // ESSENTIAL, LIFESTYLE, etc.
+  percentage  Float
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([userId])
 }

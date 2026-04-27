@@ -5,13 +5,13 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { HeaderFinance } from "@/components/ui/header-finance";
 import { PageHeaderCard } from "@/components/ui/page-header-card";
-import { FixedCostForm } from "@/components/finance/fixed-cost-form";
-import { FixedCostList } from "@/components/finance/fixed-cost-list";
+import { FixedClientManager } from "@/components/finance/fixed-client-manager";
 
 export default async function FixedExpensesPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
+  // BUSCA DADOS NO BANCO (Server Side)
   const fixedCosts = await prisma.fixedCost.findMany({
     where: { userId: session.user.id },
     orderBy: { dueDate: "asc" },
@@ -32,10 +32,8 @@ export default async function FixedExpensesPage() {
         </p>
       </PageHeaderCard>
 
-      <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-8">
-        <FixedCostForm />
-        <FixedCostList initialCosts={fixedCosts} />
-      </div>
+      {/* O Manager orquestra o Form e a List internamente gerenciando o estado de edição */}
+      <FixedClientManager initialData={fixedCosts} />
     </div>
   );
 }

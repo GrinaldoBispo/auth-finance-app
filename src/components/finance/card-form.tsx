@@ -2,66 +2,117 @@
 
 "use client";
 
-import { useState } from "react";
-import { addCreditCard } from "@/lib/actions/cards"; // Criaremos esta action
-import { Card } from "@/components/ui/card";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CardSchema, type CardFormValues } from "@/lib/validations/finance";
+import { upsertCreditCard } from "@/lib/actions/cards";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner"; // Ou seu sistema de avisos
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
 
-export function CardForm() {
-  const [name, setName] = useState("");
-  const [closingDay, setClosingDay] = useState("");
-  const [dueDay, setDueDay] = useState("");
-  const [isPending, setIsPending] = useState(false);
+interface CardFormProps {
+  initialData?: (CardFormValues & { id: string }) | null;
+  onClear?: () => void;
+}
 
-  const handleSubmit = async () => {
-    if (!name || !closingDay || !dueDay) {
-      toast.error("Preencha todos os campos");
-      return;
-    }
+export function CardForm({ initialData, onClear }: CardFormProps) {
+  // CORREÇÃO: Removemos o <CardFormValues> daqui. 
+  // O resolver cuidará da tipagem baseada no CardSchema automaticamente.
+  const form = useForm({
+    resolver: zodResolver(CardSchema),
+    defaultValues: {
+      name: initialData?.name || "",
+      closingDay: initialData?.closingDay ?? 1,
+      dueDay: initialData?.dueDay ?? 1,
+    },
+  });
 
-    setIsPending(true);
-    const result = await addCreditCard({
-      name,
-      closingDay: Number(closingDay),
-      dueDay: Number(dueDay),
-    });
-
-    if (result.success) {
-      toast.success(result.success);
-      setName(""); setClosingDay(""); setDueDay("");
+  async function onSubmit(data: any) {
+    // Fazemos o cast para CardFormValues aqui ao enviar para a action
+    const values = data as CardFormValues;
+    const res = await upsertCreditCard(values, initialData?.id);
+    
+    if (res.success) {
+      toast.success(res.success);
+      form.reset({ name: "", closingDay: 1, dueDay: 1 });
+      if (onClear) onClear();
     } else {
-      toast.error(result.error);
+      toast.error(res.error);
     }
-    setIsPending(false);
-  };
+  }
 
   return (
-    <Card className="p-4 mb-6 border-zinc-200">
-      <p className="text-xs font-bold text-zinc-400 uppercase mb-3 text-center md:text-left">
-        💳 Novo Cartão de Crédito
-      </p>
-      <div className="space-y-3">
-        <Input 
-          placeholder="Nome (ex: Nubank, Inter...)" 
-          value={name} 
-          onChange={(e) => setName(e.target.value)} 
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border">
+        <FormField 
+          control={form.control} 
+          name="name" 
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome do Cartão</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Ex: Visa Infinite" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} 
         />
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-[9px] font-bold text-zinc-400 uppercase ml-1">Fechamento</label>
-            <Input type="number" placeholder="Ex: 05" value={closingDay} onChange={(e) => setClosingDay(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-[9px] font-bold text-zinc-400 uppercase ml-1">Vencimento</label>
-            <Input type="number" placeholder="Ex: 12" value={dueDay} onChange={(e) => setDueDay(e.target.value)} />
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormField 
+            control={form.control} 
+            name="closingDay" 
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Dia Fechamento</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    {...field} 
+                    // Garantimos que o valor seja tratado como número ou string vazia para o Input
+                    value={field.value as number}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} 
+          />
+          <FormField 
+            control={form.control} 
+            name="dueDay" 
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Dia Vencimento</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    {...field} 
+                    value={field.value as number}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} 
+          />
         </div>
-        <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleSubmit} disabled={isPending}>
-          {isPending ? "Salvando..." : "Adicionar Cartão"}
-        </Button>
-      </div>
-    </Card>
+        <div className="flex gap-2">
+          <Button type="submit" className="flex-1 font-bold">
+            {initialData ? "ATUALIZAR CARTÃO" : "ADICIONAR CARTÃO"}
+          </Button>
+          {initialData && (
+            <Button type="button" variant="outline" onClick={onClear}>
+              Cancelar
+            </Button>
+          )}
+        </div>
+      </form>
+    </Form>
   );
 }

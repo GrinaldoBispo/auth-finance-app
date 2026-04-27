@@ -13,7 +13,8 @@ import {
   ChevronRight,
   ShieldCheck,
   CreditCard,
-  CalendarClock, // Ícone sugerido para Custos Fixos
+  CalendarClock, 
+  Target,
   Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,13 +46,21 @@ export function Sidebar({ role }: SidebarProps) {
       color: "text-red-600",
       hide: !isAdmin,
     },
-    // --- SEÇÃO DO USUÁRIO / WEB APP ---
+    // --- SEÇÃO DO USUÁRIO / WEB APP FINANCEIRO ---
     {
       label: "Meu Dashboard",
       icon: LayoutDashboard,
       href: "/dashboard",
       active: pathname === "/dashboard",
       color: "text-emerald-600",
+      hide: false,
+    },
+    {
+      label: "Planejamento",
+      icon: Target,
+      href: "/planning",
+      active: pathname === "/planning",
+      color: "text-purple-600",
       hide: false,
     },
     {
@@ -63,10 +72,10 @@ export function Sidebar({ role }: SidebarProps) {
       hide: false,
     },
     {
-      label: "Custos Fixos", // Nova aba integrada do Web App Financeiro
+      label: "Custos Fixos",
       icon: CalendarClock,
-      href: "/fixed",
-      active: pathname === "/fixed",
+      href: "/fixed-expenses",
+      active: pathname === "/fixed-expenses",
       color: "text-blue-500",
       hide: false,
     },
