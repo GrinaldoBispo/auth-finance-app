@@ -1,0 +1,109 @@
+// prisma/schema.prisma
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  // nao podemos passar a url aqui na versao mais nova do prisma.
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  username      String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(USER)
+
+  // Relações de Autenticação
+  accounts Account[]
+
+  // Relações do Web App Financeiro
+  creditCards CreditCard[]
+  fixedCosts  FixedCost[] // Resolvendo erro P1012: relação inversa obrigatória
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model SystemSettings {
+  id               String   @id @default("system_config")
+  smtpHost         String
+  smtpPort         String
+  smtpUser         String
+  smtpPass         String?
+  useSecure        Boolean  @default(false)
+  fromName         String   @default("Sistema")
+  fromEmail        String
+  adminNotifyEmail String
+  emailTemplate    String   @db.Text
+  updatedAt        DateTime @updatedAt
+}
+
+model CreditCard {
+  id         String   @id @default(cuid())
+  name       String
+  closingDay Int
+  dueDay     Int
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model FixedCost {
+  id          String @id @default(cuid())
+  description String
+  amount      Float
+  dueDate     Int // Dia do vencimento
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
