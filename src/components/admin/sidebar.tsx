@@ -4,21 +4,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut } from "next-auth/react"; // Import para o logout
 import { 
   LayoutDashboard, 
-  Mail, 
-  User, 
-  LogOut, 
-  ChevronRight,
-  ShieldCheck,
-  CreditCard,
+  Receipt, 
+  Target, 
+  CreditCard, 
   CalendarClock, 
-  Target,
-  Settings
+  Settings,
+  User,
+  ShieldCheck,
+  Mail,
+  LogOut // Ícone de logout
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   role?: string;
@@ -26,126 +25,118 @@ interface SidebarProps {
 
 export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
-  const isAdmin = role === "ADMIN";
 
-  const routes = [
-    // --- SEÇÃO ADMINISTRATIVA ---
-    {
-      label: "Painel Geral",
-      icon: LayoutDashboard,
-      href: "/admin",
-      active: pathname === "/admin",
-      color: "text-blue-600",
-      hide: !isAdmin,
-    },
-    {
-      label: "Configurações SMTP",
-      icon: Mail,
-      href: "/email",
-      active: pathname === "/email",
-      color: "text-red-600",
-      hide: !isAdmin,
-    },
-    // --- SEÇÃO DO USUÁRIO / WEB APP FINANCEIRO ---
-    {
-      label: "Meu Dashboard",
-      icon: LayoutDashboard,
-      href: "/dashboard",
-      active: pathname === "/dashboard",
-      color: "text-emerald-600",
-      hide: false,
-    },
-    {
-      label: "Planejamento",
-      icon: Target,
-      href: "/planning",
-      active: pathname === "/planning",
-      color: "text-purple-600",
-      hide: false,
-    },
-    {
-      label: "Meus Cartões",
-      icon: CreditCard,
-      href: "/cards",
-      active: pathname === "/cards",
-      color: "text-orange-600",
-      hide: false,
-    },
-    {
-      label: "Custos Fixos",
-      icon: CalendarClock,
-      href: "/fixed-expenses",
-      active: pathname === "/fixed-expenses",
-      color: "text-blue-500",
-      hide: false,
-    },
-    {
-      label: "Meu Perfil",
-      icon: User,
-      href: "/settings",
-      active: pathname === "/settings",
-      color: "text-zinc-500",
-      hide: false,
-    },
+  // Rotas padrão do usuário
+  const userRoutes = [
+    { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { label: "Gastos", icon: Receipt, href: "/transactions" },
+    { label: "Metas", icon: Target, href: "/planning" },
+    { label: "Cartões", icon: CreditCard, href: "/cards" },
+    { label: "Custos Fixos", icon: CalendarClock, href: "/fixed-expenses" },
+    { label: "Perfil", icon: User, href: "/settings" },
   ];
 
   return (
-    <div className="space-y-4 py-4 flex flex-col h-full bg-white border-r border-zinc-200 min-w-[260px] shadow-sm">
-      <div className="px-6 py-2 flex items-center gap-2 mb-6">
-        <div className="bg-blue-600 p-1.5 rounded-lg">
-          <ShieldCheck className="w-6 h-6 text-white" />
-        </div>
-        <h1 className="text-xl font-bold text-zinc-800 tracking-tight italic">
-          Auth<span className="text-blue-600">Mastery</span>
-        </h1>
-      </div>
-
-      <div className="flex-1 px-3 space-y-1">
-        {isAdmin && (
-          <p className="text-[10px] font-bold text-zinc-400 uppercase px-3 mb-2 tracking-widest">
-            Administração
-          </p>
-        )}
+    <div className="hidden md:flex h-full w-[280px] flex-col fixed inset-y-0 z-50 bg-white border-r border-zinc-200">
+      <div className="flex flex-col h-full p-6">
         
-        {routes.map((route) => {
-          if (route.hide) return null;
+        {/* Logo */}
+        <div className="flex items-center gap-2 mb-10 px-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-black text-sm">F</span>
+          </div>
+          <span className="font-black text-zinc-900 tracking-tighter uppercase text-lg">
+            Finance<span className="text-blue-600">App</span>
+          </span>
+        </div>
 
-          const showDivider = isAdmin && route.href === "/dashboard";
+        {/* Seção de Navegação Principal */}
+        <div className="flex-1 overflow-y-auto pr-2">
+          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-4 px-4">
+            Menu Principal
+          </p>
+          <nav className="space-y-1">
+            {userRoutes.map((route) => {
+              const isActive = pathname === route.href;
+              return (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                    isActive 
+                      ? "bg-zinc-950 text-white shadow-lg shadow-zinc-200" 
+                      : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+                  )}
+                >
+                  <route.icon className={cn(
+                    "h-5 w-5",
+                    isActive ? "text-blue-500" : "text-zinc-400 group-hover:text-zinc-600"
+                  )} />
+                  <span className="text-sm font-bold tracking-tight">
+                    {route.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
 
-          return (
-            <div key={route.href}>
-              {showDivider && (
-                <p className="text-[10px] font-bold text-zinc-400 uppercase px-3 mt-6 mb-2 tracking-widest">
-                  Pessoal
-                </p>
-              )}
-              <Link
-                href={route.href}
-                className={cn(
-                  "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:bg-zinc-100 rounded-lg transition-all",
-                  route.active ? "text-zinc-900 bg-zinc-100" : "text-zinc-500",
-                )}
-              >
-                <div className="flex items-center flex-1">
-                  <route.icon className={cn("h-5 w-5 mr-3", route.color)} />
-                  {route.label}
-                </div>
-                {route.active && <ChevronRight className="h-4 w-4 ml-auto text-zinc-400" />}
-              </Link>
-            </div>
-          );
-        })}
-      </div>
+          {/* Seção Admin (Aparece apenas se for ADMIN) */}
+		{role === "ADMIN" && (
+		  <div className="mt-8 pt-8 border-t border-zinc-100">
+			<p className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] mb-4 px-4">
+			  Administração
+			</p>
+			<nav className="space-y-1">
+			  {/* Visão Geral do Sistema */}
+			  <Link
+				href="/admin"
+				className={cn(
+				  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+				  pathname === "/admin" 
+					? "bg-red-50 text-red-600 shadow-sm" 
+					: "text-zinc-500 hover:bg-red-50 hover:text-red-600"
+				)}
+			  >
+				<ShieldCheck className="h-5 w-5" />
+				<span className="text-sm font-bold tracking-tight">
+				  Visão Geral
+				</span>
+			  </Link>
 
-      <div className="px-3 pt-4 border-t border-zinc-200">
-        <Button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          variant="ghost"
-          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mb-2"
-        >
-          <LogOut className="h-5 w-5 mr-3" />
-          Sair da conta
-        </Button>
+			  {/* Configurações de Serviços (E-mail, etc) */}
+			  <Link
+			  href="/admin/email"
+			  className={cn(
+				"flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+				pathname === "/admin/email" 
+				  ? "bg-red-50 text-red-600 shadow-sm" 
+				  : "text-zinc-500 hover:bg-red-50 hover:text-red-600"
+			  )}
+			>
+			  <Mail className="h-5 w-5" /> {/* Use o ícone Mail do Lucide */}
+			  <span className="text-sm font-bold tracking-tight">
+				Configurar E-mail
+			  </span>
+			</Link>
+			</nav>
+		  </div>
+		)}
+        </div>
+
+        {/* Rodapé da Sidebar - Botão de Logout */}
+        <div className="pt-4 border-t border-zinc-100">
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-zinc-500 hover:bg-zinc-50 hover:text-red-600 transition-all group"
+          >
+            <LogOut className="h-5 w-5 text-zinc-400 group-hover:text-red-500" />
+            <span className="text-sm font-bold tracking-tight">
+              Sair da conta
+            </span>
+          </button>
+        </div>
+
       </div>
     </div>
   );

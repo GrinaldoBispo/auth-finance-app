@@ -5,22 +5,24 @@
 import { useState } from "react";
 import { PlanningForm } from "./planning-form";
 import { PlanningList } from "./planning-list";
+import { Planning } from "@prisma/client";
 
-export function PlanningClientManager({ initialData }: { initialData: any[] }) {
-  const [editingItem, setEditingItem] = useState<any | null>(null);
+export function PlanningClientManager({ initialData }: { initialData: Planning[] }) {
+  const [editingItem, setEditingItem] = useState<Planning | null>(null);
 
   return (
     <div className="space-y-6">
-      {/* Formulário para definir categoria e % */}
       <PlanningForm 
         initialData={editingItem} 
         onClear={() => setEditingItem(null)} 
       />
       
-      {/* Lista que mostra o resumo do planejamento (ex: Essencial - 50%) */}
       <PlanningList 
         items={initialData} 
-        onEdit={(item) => setEditingItem(item)} 
+        onEdit={(item) => {
+          setEditingItem(item);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }} 
       />
     </div>
   );

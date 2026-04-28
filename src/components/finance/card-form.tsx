@@ -80,7 +80,7 @@ export function CardForm({ initialData, onClear }: CardFormProps) {
                     value={field.value as number}
                   />
                 </FormControl>
-                <FormMessage />
+               <FormMessage />
               </FormItem>
             )} 
           />

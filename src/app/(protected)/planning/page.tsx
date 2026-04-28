@@ -11,27 +11,23 @@ export default async function PlanningPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const planningItems = await prisma.planning.findMany({
+  const planningData = await prisma.planning.findMany({
     where: { userId: session.user.id },
-    orderBy: { category: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
-  const totalAllocated = planningItems.reduce((sum, item) => sum + item.percentage, 0);
-
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
-      <HeaderFinance title="Planeamento Financeiro" />
+    <div className="max-w-4xl mx-auto py-4 space-y-6">
+      <HeaderFinance title="Planejamento Financeiro" />
 
-      <PageHeaderCard 
-        label="Total Planeado" 
-        value={`${totalAllocated}%`}
-      >
+      <PageHeaderCard label="Planejamento Geral" value="0%">
         <p className="text-[10px] text-zinc-500 italic">
-          * O ideal é que a soma das metas atinja 100% do seu rendimento.
+          * Definição de limites por categoria.
         </p>
       </PageHeaderCard>
-
-      <PlanningClientManager initialData={planningItems} />
+      
+      {/* Aqui o Manager faz a divisão das colunas igual aos cartões */}
+      <PlanningClientManager initialData={planningData} />
     </div>
   );
 }

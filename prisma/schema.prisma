@@ -22,6 +22,8 @@ model User {
   image         String?
   password      String?
   role          UserRole  @default(USER)
+  monthlyIncome  Float     @default(0)
+  initialBalance Float     @default(0)
 
   // Relações de Autenticação
   accounts Account[]

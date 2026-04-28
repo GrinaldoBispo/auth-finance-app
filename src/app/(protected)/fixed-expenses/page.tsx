@@ -21,19 +21,18 @@ export default async function FixedExpensesPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-4 space-y-6">
-      <HeaderFinance title="Gastos Fixos" />
+      <HeaderFinance title="Custos Fixos" />
 
       <PageHeaderCard 
         label="Total Mensal Fixo" 
         value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalFixed)}
       >
-        <p className="text-[11px] text-zinc-400 italic">
-          Custos que se repetem todos os meses
+        <p className="text-[10px] text-zinc-500 italic">
+          * Contas que se repetem todos os meses.
         </p>
       </PageHeaderCard>
 
-      {/* O Manager orquestra o Form e a List internamente gerenciando o estado de edição */}
-      <FixedClientManager initialData={fixedCosts} />
+      {/* <FixedExpensesClientManager initialData={[]} /> */}
     </div>
   );
 }

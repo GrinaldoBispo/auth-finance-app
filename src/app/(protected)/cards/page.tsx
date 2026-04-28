@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
+import { redirect } from "next/navigation"; 
 import { HeaderFinance } from "@/components/ui/header-finance";
 import { PageHeaderCard } from "@/components/ui/page-header-card";
 // Importamos um componente Client para gerenciar a interação Adicionar/Editar
@@ -18,7 +18,7 @@ export default async function CardsPage() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
+    <div className="max-w-4xl mx-auto py-4 space-y-6">
       <HeaderFinance title="Meus Cartões" />
 
       <PageHeaderCard label="Cartões Ativos" value={String(cards.length)}>
@@ -27,7 +27,6 @@ export default async function CardsPage() {
         </p>
       </PageHeaderCard>
 
-      {/* Este manager recebe os dados do servidor e cuida do estado do Form e da List */}
       <CardsClientManager initialCards={cards} />
     </div>
   );

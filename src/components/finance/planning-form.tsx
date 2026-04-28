@@ -9,45 +9,24 @@ import { upsertPlanning } from "@/lib/actions/planning";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface PlanningFormProps {
-  initialData?: any;
-  onClear?: () => void;
-}
-
-export function PlanningForm({ initialData, onClear }: PlanningFormProps) {
-  // CORREÇÃO: Removemos o <PlanningFormValues> para evitar conflito de unknown vs number no build
+export function PlanningForm({ initialData, onClear }: { initialData?: any; onClear?: () => void }) {
   const form = useForm({
     resolver: zodResolver(PlanningSchema),
-    defaultValues: initialData || {
-      description: "",
-      category: "ESSENTIAL",
-      percentage: 0,
+    defaultValues: {
+      description: initialData?.description || "",
+      category: initialData?.category || "ESSENTIAL",
+      percentage: initialData?.percentage || 0,
     },
   });
 
   async function onSubmit(data: any) {
-    const values = data as PlanningFormValues;
-    const res = await upsertPlanning(values, initialData?.id);
-    
+    const res = await upsertPlanning(data as PlanningFormValues, initialData?.id);
     if (res.success) {
       toast.success(res.success);
-      form.reset();
+      form.reset({ description: "", category: "ESSENTIAL", percentage: 0 });
       if (onClear) onClear();
     } else {
       toast.error(res.error);
@@ -56,74 +35,46 @@ export function PlanningForm({ initialData, onClear }: PlanningFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descrição</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ex: Moradia, Alimentação..." />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border">
+        <FormField control={form.control} name="description" render={({ field }) => (
+          <FormItem>
+            <FormLabel>Descrição</FormLabel>
+            <FormControl><Input {...field} placeholder="Ex: Moradia" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
 
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo de Gasto</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="ESSENTIAL">Essencial</SelectItem>
-                    <SelectItem value="LIFESTYLE">Estilo de Vida</SelectItem>
-                    <SelectItem value="INVESTMENT">Investimento</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="percentage"
-          render={({ field: { value, ...fieldProps } }) => (
+        <div className="grid grid-cols-2 gap-4">
+          <FormField control={form.control} name="category" render={({ field }) => (
             <FormItem>
-              <FormLabel>Percentual do Orçamento (%)</FormLabel>
-              <FormControl>
-                {/* CORREÇÃO: Cast explícito de value para number resolve o erro de build */}
-                <Input 
-                  type="number" 
-                  {...fieldProps} 
-                  value={value as number} 
-                  placeholder="Ex: 50" 
-                />
-              </FormControl>
+              <FormLabel>Tipo de Gasto</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl><SelectTrigger className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="ESSENTIAL">Essencial</SelectItem>
+                  <SelectItem value="LIFESTYLE">Estilo de Vida</SelectItem>
+                  <SelectItem value="INVESTMENT">Investimento</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
-          )}
-        />
+          )} />
+          
+          <FormField control={form.control} name="percentage" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Percentual (%)</FormLabel>
+              <FormControl><Input type="number" {...field} value={field.value as number} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
 
         <div className="flex gap-2">
-          <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold uppercase text-[10px] tracking-widest">
-            {initialData ? "Atualizar Meta" : "Definir Meta"}
+          <Button type="submit" className="flex-1 font-bold">
+            {initialData ? "ATUALIZAR META" : "ADICIONAR META"}
           </Button>
           {initialData && (
-            <Button type="button" variant="outline" onClick={onClear} className="text-[10px] font-bold uppercase tracking-widest">
-              Cancelar
-            </Button>
+            <Button type="button" variant="outline" onClick={onClear}>Cancelar</Button>
           )}
         </div>
       </form>
