@@ -1,7 +1,5 @@
 // src/proxy.ts
 
-// src/proxy.ts
-
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 

@@ -32,7 +32,8 @@ model User {
   creditCards CreditCard[]
   fixedCosts  FixedCost[]
   plannings   Planning[]   // ADICIONADO: Campo oposto para resolver o erro P1012
-
+  transactions  Transaction[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -114,6 +115,21 @@ model Planning {
   description String
   category    String   // ESSENTIAL, LIFESTYLE, etc.
   percentage  Float
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  date        DateTime
+  category    String   @default("others")
+  type        String   @default("EXPENSE") 
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())

@@ -11,7 +11,6 @@ export default async function FixedExpensesPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  // BUSCA DADOS NO BANCO (Server Side)
   const fixedCosts = await prisma.fixedCost.findMany({
     where: { userId: session.user.id },
     orderBy: { dueDate: "asc" },
@@ -27,12 +26,13 @@ export default async function FixedExpensesPage() {
         label="Total Mensal Fixo" 
         value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalFixed)}
       >
-        <p className="text-[10px] text-zinc-500 italic">
-          * Contas que se repetem todos os meses.
+        <p className="text-[10px] text-zinc-400 font-medium">
+          {fixedCosts.length} despesas fixas cadastradas
         </p>
       </PageHeaderCard>
 
-      {/* <FixedExpensesClientManager initialData={[]} /> */}
+      {/* Passamos os dados do banco para o Manager gerenciar a lista e o form */}
+      <FixedClientManager initialData={fixedCosts} />
     </div>
   );
 }

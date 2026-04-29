@@ -19,13 +19,11 @@ import {
 } from "@/components/ui/form";
 
 interface CardFormProps {
-  initialData?: (CardFormValues & { id: string }) | null;
+  initialData?: any;
   onClear?: () => void;
 }
 
 export function CardForm({ initialData, onClear }: CardFormProps) {
-  // CORREÇÃO: Removemos o <CardFormValues> daqui. 
-  // O resolver cuidará da tipagem baseada no CardSchema automaticamente.
   const form = useForm({
     resolver: zodResolver(CardSchema),
     defaultValues: {
@@ -35,10 +33,8 @@ export function CardForm({ initialData, onClear }: CardFormProps) {
     },
   });
 
-  async function onSubmit(data: any) {
-    // Fazemos o cast para CardFormValues aqui ao enviar para a action
-    const values = data as CardFormValues;
-    const res = await upsertCreditCard(values, initialData?.id);
+  async function onSubmit(data: CardFormValues) {
+    const res = await upsertCreditCard(data, initialData?.id);
     
     if (res.success) {
       toast.success(res.success);
@@ -51,24 +47,31 @@ export function CardForm({ initialData, onClear }: CardFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border">
-        <FormField 
-          control={form.control} 
-          name="name" 
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
+        <div className="pb-2 border-b">
+          <h3 className="text-sm font-bold text-zinc-700">
+            {initialData ? "Editar Cartão" : "Novo Cartão de Crédito"}
+          </h3>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nome do Cartão</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Ex: Visa Infinite" />
+                <Input {...field} placeholder="Ex: Visa Infinite, NuBank..." />
               </FormControl>
               <FormMessage />
             </FormItem>
-          )} 
+          )}
         />
+
         <div className="grid grid-cols-2 gap-4">
-          <FormField 
-            control={form.control} 
-            name="closingDay" 
+          <FormField
+            control={form.control}
+            name="closingDay"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Dia Fechamento</FormLabel>
@@ -76,17 +79,16 @@ export function CardForm({ initialData, onClear }: CardFormProps) {
                   <Input 
                     type="number" 
                     {...field} 
-                    // Garantimos que o valor seja tratado como número ou string vazia para o Input
-                    value={field.value as number}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
-               <FormMessage />
+                <FormMessage />
               </FormItem>
-            )} 
+            )}
           />
-          <FormField 
-            control={form.control} 
-            name="dueDay" 
+          <FormField
+            control={form.control}
+            name="dueDay"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Dia Vencimento</FormLabel>
@@ -94,17 +96,18 @@ export function CardForm({ initialData, onClear }: CardFormProps) {
                   <Input 
                     type="number" 
                     {...field} 
-                    value={field.value as number}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
-            )} 
+            )}
           />
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex gap-2 pt-2">
           <Button type="submit" className="flex-1 font-bold">
-            {initialData ? "ATUALIZAR CARTÃO" : "ADICIONAR CARTÃO"}
+            {initialData ? "ATUALIZAR CARTÃO" : "SALVAR CARTÃO"}
           </Button>
           {initialData && (
             <Button type="button" variant="outline" onClick={onClear}>

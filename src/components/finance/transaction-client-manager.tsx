@@ -1,21 +1,21 @@
+// src/components/finance/transaction-client-manager.tsx
+
 "use client";
 
 import { useState } from "react";
-import { CardForm } from "./card-form";
-import { CardList } from "./card-list";
+import { TransactionForm } from "./transaction-form";
+import { TransactionList } from "./transaction-list";
 
-export function CardsClientManager({ initialData }: { initialData: any[] }) {
+export function TransactionClientManager({ initialData }: { initialData: any[] }) {
   const [editingItem, setEditingItem] = useState<any | null>(null);
 
   return (
     <div className="space-y-6">
-      <CardForm 
+      <TransactionForm 
         initialData={editingItem} 
         onClear={() => setEditingItem(null)} 
       />
-
-      {/* Verifique se o nome aqui é 'items' */}
-      <CardList 
+      <TransactionList 
         items={initialData || []} 
         onEdit={(item) => setEditingItem(item)} 
       />

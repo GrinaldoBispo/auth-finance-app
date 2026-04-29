@@ -10,17 +10,17 @@ export function FixedClientManager({ initialData }: { initialData: any[] }) {
   const [editingItem, setEditingItem] = useState<any | null>(null);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-8">
+    <div className="space-y-6">
+      {/* Formulário */}
       <FixedCostForm 
         initialData={editingItem} 
         onClear={() => setEditingItem(null)} 
       />
+
+      {/* Lista separada conforme o modelo de cartões */}
       <FixedCostList 
-        initialCosts={initialData} 
-        onEdit={(item) => {
-          setEditingItem(item);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }} 
+        items={initialData} 
+        onEdit={(item) => setEditingItem(item)} 
       />
     </div>
   );

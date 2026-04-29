@@ -5,10 +5,9 @@
 import { useState } from "react";
 import { PlanningForm } from "./planning-form";
 import { PlanningList } from "./planning-list";
-import { Planning } from "@prisma/client";
 
-export function PlanningClientManager({ initialData }: { initialData: Planning[] }) {
-  const [editingItem, setEditingItem] = useState<Planning | null>(null);
+export function PlanningClientManager({ initialData }: { initialData: any[] }) {
+  const [editingItem, setEditingItem] = useState<any | null>(null);
 
   return (
     <div className="space-y-6">
@@ -16,13 +15,10 @@ export function PlanningClientManager({ initialData }: { initialData: Planning[]
         initialData={editingItem} 
         onClear={() => setEditingItem(null)} 
       />
-      
+
       <PlanningList 
         items={initialData} 
-        onEdit={(item) => {
-          setEditingItem(item);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }} 
+        onEdit={(item) => setEditingItem(item)} 
       />
     </div>
   );

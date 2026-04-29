@@ -2,53 +2,82 @@
 
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2, Calendar } from "lucide-react";
 import { deleteFixedCost } from "@/lib/actions/fixed-costs";
 import { toast } from "sonner";
-import { Trash2, Edit2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface FixedCostListProps {
-  initialCosts: any[];
+  items: any[];
   onEdit: (item: any) => void;
 }
 
-export function FixedCostList({ initialCosts, onEdit }: FixedCostListProps) {
-  const handleDelete = async (id: string) => {
-    if (!confirm("Remover este gasto fixo?")) return;
-    const res = await deleteFixedCost(id);
-    if (res.success) toast.success(res.success);
-    else toast.error(res.error);
-  };
-
-  if (initialCosts.length === 0) {
-    return <p className="text-center text-zinc-400 text-xs py-10">Nenhum gasto fixo cadastrado.</p>;
+export function FixedCostList({ items, onEdit }: FixedCostListProps) {
+  async function handleDelete(id: string) {
+    if (confirm("Deseja excluir este custo fixo?")) {
+      const res = await deleteFixedCost(id);
+      if (res.success) toast.success(res.success);
+      else toast.error(res.error);
+    }
   }
 
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+
   return (
-    <div className="space-y-3">
-      <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4 ml-1">
-        Gastos Cadastrados
-      </h3>
-      {initialCosts.map((item) => (
-        <div key={item.id} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-zinc-100 group">
-          <div>
-            <p className="font-bold text-zinc-800 text-sm">{item.description}</p>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase">
-              Vence dia {item.dueDate} • <span className="text-emerald-600">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.amount)}
-              </span>
-            </p>
+    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden shadow-sm">
+      <div className="p-4 border-b bg-zinc-50/50">
+        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+          Listagem de Custos Fixos
+        </h3>
+      </div>
+
+      <div className="divide-y divide-zinc-100">
+        {items.length === 0 ? (
+          <div className="p-8 text-center text-zinc-400 text-sm italic">
+            Nenhum custo fixo cadastrado.
           </div>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(item)} className="h-8 w-8 text-blue-500">
-              <Edit2 size={16} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="h-8 w-8 text-red-400">
-              <Trash2 size={16} />
-            </Button>
-          </div>
-        </div>
-      ))}
+        ) : (
+          items.map((item) => (
+            <div key={item.id} className="p-4 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-zinc-800">{item.description}</p>
+                <div className="flex items-center gap-3 text-[10px] text-zinc-500 font-medium">
+                  <span className="flex items-center gap-1">
+                    <Calendar size={12} className="text-zinc-400" />
+                    Vence dia {item.dueDate}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-black text-zinc-900">
+                  {formatCurrency(item.amount)}
+                </span>
+                
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-400 hover:text-blue-600"
+                    onClick={() => onEdit(item)}
+                  >
+                    <Pencil size={14} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-400 hover:text-red-600"
+                    onClick={() => handleDelete(item.id)}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

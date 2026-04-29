@@ -1,12 +1,14 @@
-// src/components/finance/fixed-cost-form.tsx
+// src/components/finance/transaction-form.tsx
 
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FixedCostSchema, type FixedCostFormValues } from "@/lib/validations/finance";
-import { upsertFixedCost } from "@/lib/actions/fixed-costs";
+import { TransactionSchema, type TransactionFormValues } from "@/lib/validations/finance";
+import { upsertTransaction } from "@/lib/actions/transactions"; // Precisaremos criar esta action
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { 
   Form, 
   FormControl, 
@@ -15,31 +17,24 @@ import {
   FormLabel, 
   FormMessage 
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
-interface FixedCostFormProps {
-  initialData?: (FixedCostFormValues & { id: string }) | null;
-  onClear?: () => void;
-}
-
-export function FixedCostForm({ initialData, onClear }: FixedCostFormProps) {
-  const form = useForm({
-    resolver: zodResolver(FixedCostSchema),
+export function TransactionForm({ initialData, onClear }: { initialData?: any; onClear?: () => void }) {
+  const form = useForm<TransactionFormValues>({
+    resolver: zodResolver(TransactionSchema) as any,
     defaultValues: {
       description: initialData?.description || "",
-      amount: initialData?.amount ?? 0,
-      dueDate: initialData?.dueDate ?? 1,
+      amount: initialData?.amount || 0,
+      date: initialData?.date || new Date().toISOString().split('T')[0],
+      category: initialData?.category || "others",
+      type: "EXPENSE",
     },
   });
 
-  async function onSubmit(data: any) {
-    const values = data as FixedCostFormValues;
-    const res = await upsertFixedCost(values, initialData?.id);
-    
+  async function onSubmit(data: TransactionFormValues) {
+    const res = await upsertTransaction(data, initialData?.id);
     if (res.success) {
       toast.success(res.success);
-      form.reset({ description: "", amount: 0, dueDate: 1 });
+      form.reset();
       if (onClear) onClear();
     } else {
       toast.error(res.error);
@@ -48,17 +43,13 @@ export function FixedCostForm({ initialData, onClear }: FixedCostFormProps) {
 
   return (
     <Form {...form}>
-      <form 
-        onSubmit={form.handleSubmit(onSubmit)} 
-        className="space-y-4 bg-white p-6 rounded-xl border shadow-sm"
-      >
-        {/* Header Interno do Card */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
         <div className="pb-2 border-b">
           <h3 className="text-sm font-bold text-zinc-700">
-            {initialData ? "Editar Gasto Fixo" : "Novo Gasto Fixo"}
+            {initialData ? "Editar Lançamento" : "Novo Gasto / Ganhos"}
           </h3>
         </div>
-        
+
         <FormField
           control={form.control}
           name="description"
@@ -66,13 +57,13 @@ export function FixedCostForm({ initialData, onClear }: FixedCostFormProps) {
             <FormItem>
               <FormLabel>Descrição</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Ex: Aluguel, Internet..." />
+                <Input {...field} placeholder="Ex: Mercado, Posto, Freelance..." />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -85,7 +76,7 @@ export function FixedCostForm({ initialData, onClear }: FixedCostFormProps) {
                     type="number" 
                     step="0.01" 
                     {...field} 
-                    value={(field.value as number) ?? ""}
+					value={(field.value as any) ?? ""}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
@@ -93,20 +84,22 @@ export function FixedCostForm({ initialData, onClear }: FixedCostFormProps) {
               </FormItem>
             )}
           />
-          
           <FormField
             control={form.control}
-            name="dueDate"
+            name="date"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Dia Vencimento</FormLabel>
+                <FormLabel>Data</FormLabel>
                 <FormControl>
                   <Input 
-                    type="number" 
-                    {...field} 
-                    value={(field.value as any) ?? ""}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
+					type="date"
+					{...field}
+					value={
+						field.value instanceof Date 
+						? field.value.toISOString().split("T")[0] 
+						: (field.value as string) ?? ""
+						}
+					/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -114,17 +107,10 @@ export function FixedCostForm({ initialData, onClear }: FixedCostFormProps) {
           />
         </div>
 
-        {/* Botões seguindo o padrão flex-1 do CardForm */}
         <div className="flex gap-2 pt-2">
           <Button type="submit" className="flex-1 font-bold">
-            {initialData ? "ATUALIZAR GASTO" : "SALVAR GASTO"}
+            {initialData ? "ATUALIZAR" : "LANÇAR AGORA"}
           </Button>
-          
-          {initialData && (
-            <Button type="button" variant="outline" onClick={onClear}>
-              Cancelar
-            </Button>
-          )}
         </div>
       </form>
     </Form>

@@ -27,7 +27,7 @@ export default async function CardsPage() {
         </p>
       </PageHeaderCard>
 
-      <CardsClientManager initialCards={cards} />
+      <CardsClientManager initialData={cards} />
     </div>
   );
 }
