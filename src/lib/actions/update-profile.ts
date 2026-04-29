@@ -1,4 +1,4 @@
-// src/actions/update-profile.ts
+// src/lib/actions/update-profile.ts
 
 "use server";
 
@@ -7,16 +7,14 @@ import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
-export async function updateProfile(formData: FormData) {
+export async function updateProfile(values: any) { // Mudamos para receber objeto direto do form
   const session = await auth();
   
   if (!session?.user?.id) {
     return { error: "Não autorizado" };
   }
 
-  const name = formData.get("name") as string;
-  const username = formData.get("username") as string;
-  const password = formData.get("password") as string;
+  const { name, username, password, monthlyIncome, initialBalance } = values;
 
   try {
     // 1. Validação de Username duplicado
@@ -32,11 +30,18 @@ export async function updateProfile(formData: FormData) {
 
     // 2. Montagem do objeto de update
     const updateData: any = {
-      name,
-      username,
-    };
+	  name: values.name,
+	  username: values.username,
+	  email: values.email, // Adicionado e-mail
+	  monthlyIncome: Number(values.monthlyIncome),
+	  initialBalance: Number(values.initialBalance),
+	};
 
-    // 3. Hash da senha (apenas se o usuário preencheu)
+	if (values.password && values.password.length >= 6) {
+	  updateData.password = await hash(values.password, 10);
+	}
+
+    // 3. Hash da senha
     if (password && password.length > 0) {
       if (password.length < 6) {
         return { error: "A senha deve ter pelo menos 6 caracteres." };
@@ -49,7 +54,6 @@ export async function updateProfile(formData: FormData) {
       data: updateData,
     });
 
-    // 4. Atualiza o cache das páginas
     revalidatePath("/dashboard");
     revalidatePath("/settings");
 

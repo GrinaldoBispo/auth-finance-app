@@ -51,15 +51,14 @@ export async function setupUserAction(formData: { income: number; balance: numbe
       ];
 
       await tx.planning.createMany({
-        data: categories.map((cat) => ({
-          userId,
-          categoryName: cat.name,
-          category: cat.category,         // Mapeado aqui
-          percentage: cat.percentage,
-          description: cat.description,   // Mapeado aqui
-          suggestedValue: (formData.income * cat.percentage) / 100,
-        })),
-      });
+	  data: categories.map((cat) => ({
+		userId,
+		category: cat.category,    // Confirmado que existe
+		percentage: cat.percentage, // Confirmado que existe
+		description: cat.description, // Confirmado que existe
+		// REMOVEMOS o suggestedValue e o categoryName daqui
+	  })),
+	});
     }
   });
 
