@@ -2,63 +2,40 @@
 
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PlanningSchema, type PlanningFormValues } from "@/lib/validations/finance";
-import { upsertPlanning } from "@/lib/actions/planning";
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface PlanningFormProps {
-  initialData?: any;
-  onClear?: () => void;
-}
-
-export function PlanningForm({ initialData, onClear }: PlanningFormProps) {
-  const form = useForm<PlanningFormValues>({
-    resolver: zodResolver(PlanningSchema) as any,
+export function PlanningForm({ initialData, groups, onSave, onClear }: any) {
+  const form = useForm({
     defaultValues: {
-      description: initialData?.description || "",
-      category: initialData?.category || "essentials",
-      percentage: initialData?.percentage || 0,
+      description: "",
+      financialGroupId: "",
+      percentage: 0,
     },
   });
 
-  async function onSubmit(data: PlanningFormValues) {
-    const res = await upsertPlanning(data, initialData?.id);
-    if (res.success) {
-      toast.success(res.success);
-      form.reset({ description: "", category: "essentials", percentage: 0 });
-      if (onClear) onClear();
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        description: initialData.description,
+        financialGroupId: initialData.financialGroupId || initialData.financialGroup?.id,
+        percentage: initialData.percentage,
+      });
     } else {
-      toast.error(res.error);
+      form.reset({ description: "", financialGroupId: groups[0]?.id || "", percentage: 0 });
     }
-  }
+  }, [initialData, groups, form]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
-        <div className="pb-2 border-b">
-          <h3 className="text-sm font-bold text-zinc-700">
-            {initialData ? "Editar Meta" : "Nova Meta de Gasto"}
-          </h3>
-        </div>
+      <form onSubmit={form.handleSubmit(onSave)} className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
+        <h3 className="text-sm font-bold text-zinc-700 border-b pb-2">
+          {initialData ? "Editar Meta" : "Adicionar Meta ao Plano"}
+        </h3>
 
         <FormField
           control={form.control}
@@ -66,9 +43,7 @@ export function PlanningForm({ initialData, onClear }: PlanningFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Ex: Reserva, Aluguel..." />
-              </FormControl>
+              <FormControl><Input {...field} placeholder="Ex: Aluguel, Academia..." /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -77,16 +52,20 @@ export function PlanningForm({ initialData, onClear }: PlanningFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="category"
+            name="financialGroupId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Categoria</FormLabel>
+                <FormLabel>Grupo Mestre</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                  </FormControl>
                   <SelectContent>
-                    <SelectItem value="essentials">Essenciais</SelectItem>
-                    <SelectItem value="lifestyle">Estilo de Vida</SelectItem>
-                    <SelectItem value="investments">Investimentos</SelectItem>
+                    {groups.map((g: any) => (
+                      <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -101,12 +80,7 @@ export function PlanningForm({ initialData, onClear }: PlanningFormProps) {
               <FormItem>
                 <FormLabel>Percentual (%)</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field}
-					value={(field.value as any) ?? ""}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
+                  <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,14 +89,10 @@ export function PlanningForm({ initialData, onClear }: PlanningFormProps) {
         </div>
 
         <div className="flex gap-2">
-          <Button type="submit" className="flex-1 font-bold">
-            {initialData ? "ATUALIZAR META" : "SALVAR META"}
+          <Button type="submit" className={`flex-1 font-bold ${initialData ? "bg-amber-600" : ""}`}>
+            {initialData ? "ATUALIZAR ITEM" : "INCLUIR NA LISTA"}
           </Button>
-          {initialData && (
-            <Button type="button" variant="outline" onClick={onClear}>
-              Cancelar
-            </Button>
-          )}
+          {initialData && <Button type="button" variant="outline" onClick={onClear}>CANCELAR</Button>}
         </div>
       </form>
     </Form>

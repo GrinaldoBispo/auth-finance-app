@@ -1,28 +1,33 @@
 // src/app/(protected)/transactions/page.tsx
 
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { HeaderFinance } from "@/components/ui/header-finance";
 import { PageHeaderCard } from "@/components/ui/page-header-card";
 import { TransactionClientManager } from "@/components/finance/transaction-client-manager";
-// import { prisma } from "@/lib/prisma"; // Descomente quando a model Transaction existir
 
 export default async function TransactionsPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  // --- BUSCA NO BANCO (Mantenha comentado até criar a model no Prisma) ---
-  /*
-  const transactions = await prisma.transaction.findMany({
-    where: { userId: session.user.id },
-    orderBy: { date: "desc" },
-  });
-  */
-  
-  // Por enquanto, usamos um array vazio para não quebrar a página
-  const transactions: any[] = []; 
+  // Buscamos as transações com todos os relacionamentos para a lista
+  const [transactions, plannings, creditCards] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { userId: session.user.id },
+      include: { 
+        planning: { include: { financialGroup: true } },
+        creditCard: true 
+      },
+      orderBy: { date: "desc" },
+    }),
+    prisma.planning.findMany({ where: { userId: session.user.id } }),
+    prisma.creditCard.findMany({ where: { userId: session.user.id } })
+  ]);
 
-  const totalSpent = transactions.reduce((acc, curr) => acc + curr.amount, 0);
+  const totalSpent = transactions
+    .filter(t => t.type === "EXPENSE")
+    .reduce((acc, curr) => acc + curr.amount, 0);
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -40,8 +45,11 @@ export default async function TransactionsPage() {
         </p>
       </PageHeaderCard>
 
-      {/* Gerenciador que criamos no passo anterior */}
-      <TransactionClientManager initialData={transactions} />
+      <TransactionClientManager 
+        initialData={transactions} 
+        plannings={plannings}
+        creditCards={creditCards}
+      />
     </div>
   );
 }

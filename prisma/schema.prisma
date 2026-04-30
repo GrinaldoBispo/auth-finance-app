@@ -14,14 +14,14 @@ enum UserRole {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  username      String?   @unique
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole  @default(USER)
+  id             String    @id @default(cuid())
+  name           String?
+  username       String?   @unique
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           UserRole  @default(USER)
   monthlyIncome  Float     @default(0)
   initialBalance Float     @default(0)
 
@@ -29,11 +29,11 @@ model User {
   accounts Account[]
 
   // Relações do Web App Financeiro
-  creditCards CreditCard[]
-  fixedCosts  FixedCost[]
-  plannings   Planning[]   // ADICIONADO: Campo oposto para resolver o erro P1012
-  transactions  Transaction[]
-  
+  creditCards  CreditCard[]
+  fixedCosts   FixedCost[]
+  plannings    Planning[]
+  transactions Transaction[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -90,48 +90,75 @@ model CreditCard {
   dueDay     Int
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // ADICIONE ESTA LINHA:
+  transactions Transaction[] 
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([userId])
 }
 
-model FixedCost {
-  id          String @id @default(cuid())
-  description String
-  amount      Float
-  dueDate     Int // Dia do vencimento
-  userId      String
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Transaction {
+  id           String   @id @default(cuid())
+  description  String
+  amount       Float
+  date         DateTime
+  type         String   @default("EXPENSE") // INCOME ou EXPENSE
+  paymentMethod String  @default("CASH")    // CASH (Pix/Débito) ou CREDIT_CARD
+  
+  // Se for Cartão de Crédito
+  installments Int?     @default(1)
+  creditCardId String?
+  creditCard   CreditCard? @relation(fields: [creditCardId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  planningId   String
+  planning     Planning @relation(fields: [planningId], references: [id])
 
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
   @@index([userId])
+}
+
+model FinancialGroup {
+  id        String     @id @default(cuid())
+  name      String     // Ex: "Essenciais", "Estilo de Vida", "Investimentos"
+  slug      String     @unique // Ex: "essentials", "lifestyle", "investments"
+  color     String     // Ex: "#3b82f6"
+  planning  Planning[]
 }
 
 model Planning {
-  id          String   @id @default(cuid())
-  description String
-  category    String   // ESSENTIAL, LIFESTYLE, etc.
-  percentage  Float
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String         @id @default(cuid())
+  description      String         // Ex: "Gastos fixos e sobrevivência"
+  percentage       Float          // Ex: 50
+  userId           String
+  user             User           @relation(fields: [userId], references: [id])
+  financialGroupId String
+  financialGroup   FinancialGroup @relation(fields: [financialGroupId], references: [id])
+  
+  fixedCosts       FixedCost[]    
+  transactions     Transaction[]  // Adicionado para as transações apontarem para cá
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   @@index([userId])
 }
 
-model Transaction {
+model FixedCost {
   id          String   @id @default(cuid())
   description String
   amount      Float
-  date        DateTime
-  category    String   @default("others")
-  type        String   @default("EXPENSE") 
+  dueDate     Int
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  planningId  String   
+  planning    Planning @relation(fields: [planningId], references: [id])
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

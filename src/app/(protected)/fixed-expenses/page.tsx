@@ -11,10 +11,22 @@ export default async function FixedExpensesPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const fixedCosts = await prisma.fixedCost.findMany({
-    where: { userId: session.user.id },
-    orderBy: { dueDate: "asc" },
-  });
+  // Buscamos Custos Fixos e o Planejamento (que agora faz o papel de categorias)
+  const [fixedCosts, plannings] = await Promise.all([
+    prisma.fixedCost.findMany({
+      where: { userId: session.user.id },
+      include: { 
+        planning: { // Inclui a meta vinculada
+          include: { financialGroup: true } 
+        } 
+      }, 
+      orderBy: { dueDate: "asc" },
+    }),
+    prisma.planning.findMany({
+      where: { userId: session.user.id },
+      orderBy: { description: "asc" }
+    })
+  ]);
 
   const totalFixed = fixedCosts.reduce((acc, curr) => acc + curr.amount, 0);
 
@@ -31,8 +43,8 @@ export default async function FixedExpensesPage() {
         </p>
       </PageHeaderCard>
 
-      {/* Passamos os dados do banco para o Manager gerenciar a lista e o form */}
-      <FixedClientManager initialData={fixedCosts} />
+      {/* Passamos 'plannings' para o Manager */}
+      <FixedClientManager initialData={fixedCosts} plannings={plannings} />
     </div>
   );
 }

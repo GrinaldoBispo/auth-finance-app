@@ -1,5 +1,3 @@
-// src/app/(protected)/planning/page.tsx
-
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -11,23 +9,28 @@ export default async function PlanningPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
+  // Buscamos os planos com os dados do grupo (cor e nome)
   const planningData = await prisma.planning.findMany({
     where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
+    include: { financialGroup: true },
+    orderBy: { createdAt: "asc" },
   });
+
+  // Buscamos os grupos globais para o Select do formulário
+  const financialGroups = await prisma.financialGroup.findMany({
+    orderBy: { name: "asc" },
+  });
+
+  const totalPercentage = planningData.reduce((acc, item) => acc + item.percentage, 0);
 
   return (
     <div className="max-w-4xl mx-auto py-4 space-y-6">
       <HeaderFinance title="Planejamento Financeiro" />
-
-      <PageHeaderCard label="Planejamento Geral" value="0%">
-        <p className="text-[10px] text-zinc-500 italic">
-          * Definição de limites por categoria.
-        </p>
-      </PageHeaderCard>
       
-      {/* Aqui o Manager faz a divisão das colunas igual aos cartões */}
-      <PlanningClientManager initialData={planningData} />
+      <PlanningClientManager 
+        initialData={planningData} 
+        groups={financialGroups} 
+      />
     </div>
   );
 }
