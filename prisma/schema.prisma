@@ -101,26 +101,28 @@ model CreditCard {
 }
 
 model Transaction {
-  id           String   @id @default(cuid())
-  description  String
-  amount       Float
-  date         DateTime
-  type         String   @default("EXPENSE") // INCOME ou EXPENSE
-  paymentMethod String  @default("CASH")    // CASH (Pix/Débito) ou CREDIT_CARD
+  id                 String      @id @default(cuid())
+  description        String
+  amount             Float       // Valor da PARCELA individual
+  date               DateTime
+  type               String      @default("EXPENSE")
+  paymentMethod      String      @default("CASH")
   
-  // Se for Cartão de Crédito
-  installments Int?     @default(1)
-  creditCardId String?
-  creditCard   CreditCard? @relation(fields: [creditCardId], references: [id])
+  // Novos campos de controle
+  installments       Int?        @default(1)
+  currentInstallment Int?        @default(1)
+  purchaseId         String?     // ID que liga todas as parcelas de uma mesma compra
 
-  planningId   String
-  planning     Planning @relation(fields: [planningId], references: [id])
-
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditCardId       String?
+  creditCard         CreditCard? @relation(fields: [creditCardId], references: [id])
+  planningId         String
+  planning           Planning    @relation(fields: [planningId], references: [id])
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  createdAt    DateTime @default(now())
+  createdAt          DateTime    @default(now())
   @@index([userId])
+  @@index([purchaseId]) // Index para deletar rápido
 }
 
 model FinancialGroup {

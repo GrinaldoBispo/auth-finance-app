@@ -16,12 +16,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Loader2 } from "lucide-react";
 
 export function TransactionForm({ initialData, plannings, creditCards, onClear }: any) {
+  // Pega a data local no formato YYYY-MM-DD
+  const today = new Date().toLocaleDateString('en-CA');
+
   const form = useForm({
     resolver: zodResolver(TransactionSchema) as any,
     defaultValues: {
       description: initialData?.description || "",
       amount: initialData?.amount || 0,
-      date: initialData?.date || new Date().toISOString().split('T')[0],
+      date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : today,
       type: initialData?.type || "EXPENSE",
       paymentMethod: initialData?.paymentMethod || "CASH",
       installments: initialData?.installments || 1,
@@ -30,12 +33,12 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
     },
   });
 
-  // Sincroniza o formulário ao entrar em modo de edição ou limpar
   useEffect(() => {
     if (initialData) {
       form.reset({
         description: initialData.description,
         amount: initialData.amount,
+        // Garante que ao editar, a data venha como string limpa YYYY-MM-DD
         date: new Date(initialData.date).toISOString().split('T')[0],
         type: initialData.type,
         paymentMethod: initialData.paymentMethod || "CASH",
@@ -47,7 +50,7 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
       form.reset({
         description: "",
         amount: 0,
-        date: new Date().toISOString().split('T')[0],
+        date: today,
         type: "EXPENSE",
         paymentMethod: "CASH",
         installments: 1,
@@ -55,16 +58,23 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
         planningId: "",
       });
     }
-  }, [initialData, form]);
+  }, [initialData, form, today]);
 
   const paymentMethod = form.watch("paymentMethod");
   const transactionType = form.watch("type");
 
   async function onSubmit(data: any) {
-    // Log para depuração: Verifique se o planningId aparece aqui no console (F12)
-    console.log("Submetendo dados:", data);
+    // AJUSTE CIRÚRGICO DE DATA: 
+    // Evita que o fuso horário (timezone) altere o dia no banco de dados
+    const [year, month, day] = data.date.split('-').map(Number);
+    const adjustedDate = new Date(year, month - 1, day, 12, 0, 0);
 
-    const res = await upsertTransaction(data, initialData?.id);
+    const payload = {
+      ...data,
+      date: adjustedDate.toISOString(),
+    };
+
+    const res = await upsertTransaction(payload, initialData?.id);
     
     if (res.success) {
       toast.success(res.success);
@@ -79,12 +89,11 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
         <div className="pb-2 border-b flex justify-between items-center">
-          <h3 className="text-sm font-bold text-zinc-700">
+          <h3 className="text-sm font-bold text-zinc-700 uppercase tracking-tight">
             {initialData ? "Editar Lançamento" : "Novo Gasto / Ganho"}
           </h3>
         </div>
 
-        {/* TOGGLE TIPO DE TRANSAÇÃO */}
         <FormField
           control={form.control}
           name="type"
@@ -173,13 +182,13 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Forma de Pagamento</FormLabel>
+                  <FormLabel>Pagamento</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="CASH">À Vista / Pix / Débito</SelectItem>
+                      <SelectItem value="CASH">À Vista / Pix</SelectItem>
                       <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
                     </SelectContent>
                   </Select>
@@ -196,10 +205,10 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
               name="creditCardId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Qual Cartão?</FormLabel>
+                  <FormLabel>Cartão</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full"><SelectValue placeholder="Escolha o cartão" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Qual cartão?" /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {creditCards?.map((card: any) => (
@@ -216,7 +225,7 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
               name="installments"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nº de Parcelas</FormLabel>
+                  <FormLabel>Parcelas</FormLabel>
                   <FormControl>
                     <Input 
                       type="number" 
@@ -231,18 +240,18 @@ export function TransactionForm({ initialData, plannings, creditCards, onClear }
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-2">
           <Button 
             type="submit" 
             disabled={form.formState.isSubmitting}
-            className="flex-1 font-bold h-9 bg-zinc-900 hover:bg-black"
+            className="flex-1 font-bold h-11 bg-zinc-900 hover:bg-black text-xs"
           >
             {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {initialData ? "ATUALIZAR LANÇAMENTO" : "CONFIRMAR LANÇAMENTO"}
           </Button>
           
           {initialData && (
-            <Button type="button" variant="outline" onClick={onClear} className="font-bold">
+            <Button type="button" variant="outline" onClick={onClear} className="font-bold h-11 text-xs">
               CANCELAR
             </Button>
           )}
